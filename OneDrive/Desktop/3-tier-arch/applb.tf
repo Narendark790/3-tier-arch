@@ -4,13 +4,16 @@ resource "aws_lb" "external" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.swiggy-alb-sg-1.id]
-  subnets            = [aws_subnet.swiggy-pub-sub-1.id, aws_subnet.swiggy-pub-sub-2.id]
+  subnets            = [
+    aws_subnet.swiggy-pub-sub-1.id,
+    aws_subnet.swiggy-pub-sub-2.id
+  ]
 
   enable_deletion_protection = false
 }
 
 # Create a Target Group
-resource "aws_lb_target_group" "external-elb" {
+resource "aws_lb_target_group" "external_elb" {
   name     = "external-tg"
   port     = 80
   protocol = "HTTP"
@@ -26,7 +29,7 @@ resource "aws_lb_target_group" "external-elb" {
 }
 
 # Attach Auto Scaling Group Instances to Target Group
-resource "aws_autoscaling_attachment" "swiggy-web-asg-attachment" {
+resource "aws_autoscaling_attachment" "swiggy_web_asg_attachment" {
   autoscaling_group_name = aws_autoscaling_group.swiggy-web-asg.name
-  lb_target_group_arn    = aws_lb_target_group.external-elb.arn
+  lb_target_group_arn    = aws_lb_target_group.external_elb.arn
 }
