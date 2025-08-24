@@ -1,10 +1,10 @@
 # Latest Amazon Linux 2 AMI (region-agnostic)
 data "aws_ami" "amzn2" {
-  most_recent = true
-  owners      = ["amazon"]
-  filter { name = "name" values = ["amzn2-ami-hvm-*-x86_64-gp2"] }
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
 }
-
 # Launch Template
 resource "aws_launch_template" "app_template" {
   name_prefix               = "swiggy-app-"
