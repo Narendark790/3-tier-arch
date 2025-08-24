@@ -30,5 +30,6 @@ resource "aws_lb_target_group" "external_elb" {
 
 # Attach Auto Scaling Group Instances to Target Group
 resource "aws_autoscaling_attachment" "swiggy_web_asg_attachment" {
-target_group_arn = aws_lb_target_group.external.arn  
+  autoscaling_group_name = aws_autoscaling_group.swiggy_web_asg.name
+  alb_target_group_arn   = aws_lb_target_group.external.arn
 }
