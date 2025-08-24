@@ -15,7 +15,7 @@ resource "aws_db_instance" "swiggy-db" {
   password                    = "Devopsbyraham007*"
   parameter_group_name        = "default.mysql8.0"
   db_subnet_group_name        = aws_db_subnet_group.swiggy-db-sub-grp.name
-  vpc_security_group_ids      = ["${aws_security_group.swiggy-db-sg.id}"]
+  vpc_security_group_ids      = "sg-0cc393add35f29e3b"
   multi_az                    = true
   skip_final_snapshot         = true
   publicly_accessible          = false
