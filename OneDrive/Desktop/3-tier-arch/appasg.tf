@@ -1,45 +1,38 @@
-# Create an EC2 Auto Scaling Group - app
-resource "aws_autoscaling_group" "swiggy_app_asg" {
-  name = "swiggy-app-asg"
+# Launch Template for EC2 instances
+resource "aws_launch_template" "app_template" {
+  name_prefix   = "swiggy-app-"
+  image_id      = "ami-0c55b159cbfafe1f0" # Amazon Linux 2 (update if needed)
+  instance_type = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.app_sg.id]
+
+  user_data = base64encode(<<-EOF
+              #!/bin/bash
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "Hello from Swiggy App" > /var/www/html/index.html
+              EOF
+  )
+}
+
+# Auto Scaling Group (App Tier)
+resource "aws_autoscaling_group" "app_asg" {
+  name                = "swiggy-asg"
+  max_size            = 3
+  min_size            = 2
+  desired_capacity    = 2
+  vpc_zone_identifier = [aws_subnet.pvt1.id, aws_subnet.pvt2.id]
 
   launch_template {
-    id      = aws_launch_template.swiggy_app_template.id
+    id      = aws_launch_template.app_template.id
     version = "$Latest"
   }
 
-  vpc_zone_identifier = [
-    aws_subnet.swiggy_pvt_sub_1.id,
-    aws_subnet.swiggy_pvt_sub_2.id
-  ]
+  target_group_arns = [aws_lb_target_group.app_tg.arn]
 
-  min_size         = 2
-  max_size         = 3
-  desired_capacity = 2
-}
-
-
-# Create a launch template for the EC2 instances
-resource "aws_launch_template" "swiggy-app-template" {
-  name_prefix   = "swiggy-app-template"
-  image_id      = "ami-0a232144cf20a27a5"
-  instance_type = "t3.micro"
-  key_name      = "3tierprojectnarendar"
-
-  network_interfaces {
-    security_groups             = [aws_security_group.swiggy-ec2-asg-sg-app.id]
-    associate_public_ip_address = false
-  }
-
-  user_data = base64encode(<<-EOF
-    #!/bin/bash
-
-    sudo yum install mysql -y
-  EOF
-  )
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes  = all
+  tag {
+    key                 = "Name"
+    value               = "swiggy-app"
+    propagate_at_launch = true
   }
 }
-
