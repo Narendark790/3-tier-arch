@@ -4,7 +4,7 @@ resource "aws_lb" "app_lb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.lb_sg.id]
-  subnets            = [aws_subnet.pub1.id, aws_subnet.pub2.id]
+  subnets            = [subnet-03fa54a742101e609, subnet-092bbebd2a91c7046]
   tags               = { Name = "swiggy-alb" }
 }
 
@@ -13,7 +13,7 @@ resource "aws_lb_target_group" "app_tg" {
   name     = "swiggy-tg"
   port     = 80
   protocol = "HTTP"
-  vpc_id   = aws_vpc.main.id
+  vpc_id   = vpc-0ab9b74d8c4bc3af0
 
   health_check {
     path                = "/"
