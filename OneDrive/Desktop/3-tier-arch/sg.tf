@@ -105,7 +105,63 @@ resource "aws_route_table_association" "pvt2" {
 resource "aws_security_group" "lb_sg" {
   name        = "swiggy-alb-sg"
   description = "ALB SG"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = vpc-0ab9b74d8c4bc3af0
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# App SG (allow 80 from ALB SG)
+resource "aws_security_group" "app_sg" {
+  name   = "swiggy-app-sg"
+  vpc_id = "vpc-0ab9b74d8c4bc3af0"
+
+  ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lb_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# DB SG (allow 3306 from App SG) — optional if you’re using RDS
+resource "aws_security_group" "db_sg" {
+  name   = "swiggy-db-sg"
+  vpc_id = "vpc-0ab9b74d8c4bc3af0"
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.app_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 
  ingress {
   from_port   = 80
