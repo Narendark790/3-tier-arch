@@ -1,5 +1,4 @@
-output "lb_dns_name" {
-  description = "The DNS name of the load balancer"
-  value       = aws_lb.external.dns_name
+output "alb_dns_name" {
+  value       = aws_lb.app_lb.dns_name
+  description = "Public DNS of the Application Load Balancer"
 }
-
