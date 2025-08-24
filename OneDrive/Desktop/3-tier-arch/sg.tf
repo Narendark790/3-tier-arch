@@ -100,12 +100,11 @@ resource "aws_route_table_association" "pvt2" {
   subnet_id      = aws_subnet.pvt2.id
 }
 
-# Security groups
-# - ALB SG: allow 80 from anywhere
-resource "aws_security_group" "lb_sg" {
+# Security group for ALB
+resource "aws_security_group" "alb_sg" {
   name        = "swiggy-alb-sg"
-  description = "ALB SG"
-  vpc_id      = vpc-0ab9b74d8c4bc3af0
+  description = "Allow HTTP inbound traffic"
+  vpc_id      = "vpc-0ab9b74d8c4bc3af0" # <-- change to your VPC id
 
   ingress {
     from_port   = 80
@@ -119,6 +118,35 @@ resource "aws_security_group" "lb_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "swiggy-alb-sg"
+  }
+}
+
+# Security group for EC2/ASG
+resource "aws_security_group" "app_sg" {
+  name        = "swiggy-app-sg"
+  description = "Allow traffic from ALB"
+  vpc_id      = "vpc-0ab9b74d8c4bc3af0"
+
+  ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "swiggy-app-sg"
   }
 }
 
