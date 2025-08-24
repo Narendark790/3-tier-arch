@@ -101,7 +101,6 @@ resource "aws_route_table_association" "pvt2" {
 }
 
 # Security group for EC2/ASG
-resource "aws_security_group" "app_sg" {
   name        = "swiggy-app-sg"
   description = "Allow traffic from ALB"
   vpc_id      = "vpc-0ab9b74d8c4bc3af0"
@@ -164,7 +163,6 @@ resource "aws_security_group" "db_sg" {
 }
 
 # - App SG: allow 80 only from ALB SG
-resource "aws_security_group" "app_sg" {
   name        = "swiggy-app-sg"
   description = "App SG"
   vpc_id      = aws_vpc.main.id
