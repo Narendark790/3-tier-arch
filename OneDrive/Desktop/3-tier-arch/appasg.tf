@@ -8,7 +8,7 @@ data "aws_ami" "amzn2" {
 # Launch Template
 resource "aws_launch_template" "app_template" {
   name_prefix               = "swiggy-app-"
-  image_id                  = 0c4a668b99e68bbde
+  image_id                  = "0c4a668b99e68bbde"
   instance_type             = "t3.micro"
   vpc_security_group_ids    = [aws_security_group.app_sg.id]
 
