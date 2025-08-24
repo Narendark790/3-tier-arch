@@ -139,7 +139,12 @@ resource "aws_security_group" "app_sg" {
   # (Optional) SSH for troubleshooting - restrict as needed
   # ingress { from_port = 22 to_port = 22 protocol = "tcp" cidr_blocks = ["YOUR.IP.ADDR.0/24"] }
 
-  egress { from_port = 0 to_port = 0 protocol = "-1" cidr_blocks = ["0.0.0.0/0"] }
+  egress {
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
+}
 
   tags = { Name = "swiggy-app-sg" }
 }
