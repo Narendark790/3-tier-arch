@@ -1,141 +1,135 @@
-# Security Group for ASG
-resource "aws_security_group" "swiggy-ec2-asg-sg" {
-  name        = "swiggy-ec2-asg-sg"
-  description = "Security group for EC2 instances in ASG"
-  vpc_id      = aws_vpc.swiggy-vpc.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "swiggy-ec2-asg-sg"
-  }
+# Availability Zones
+data "aws_availability_zones" "azs" {
+  state = "available"
 }
 
-
-# Security Group for Database
-resource "aws_security_group" "swiggy-db-sg" {
-  name        = "swiggy-db-sg"
-  description = "Security group for Swiggy Database"
-  vpc_id      = aws_vpc.swiggy-vpc.id
-
-  ingress {
-    from_port = 3306 # MySQL/Aurora port
-    to_port   = 3306
-    protocol  = "tcp"
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "Swiggy DB SG"
-  }
+# VPC
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+  tags = { Name = "swiggy-vpc" }
 }
 
-# Security Group for Application Load Balancer
-resource "aws_security_group" "swiggy-alb-sg-1" {
-  name        = "swiggy-alb-sg-1"
-  description = "Security group for Swiggy Application Load Balancer"
-  vpc_id      = aws_vpc.swiggy-vpc.id
-
-  ingress {
-    from_port   = 80 # HTTP
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443 # HTTPS
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "Swiggy ALB SG"
-  }
+# Internet Gateway (for public subnets)
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+  tags   = { Name = "swiggy-igw" }
 }
 
-# Create a Security Group for ASG
-resource "aws_security_group" "swiggy-ec2-asg-sg-app" {
-  name        = "swiggy-ec2-asg-sg-app"
-  description = "Security group for Swiggy EC2 instances in ASG"
-  vpc_id      = aws_vpc.swiggy-vpc.id
+# Public subnets (for ALB)
+resource "aws_subnet" "pub1" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = data.aws_availability_zones.azs.names[0]
+  map_public_ip_on_launch = true
+  tags = { Name = "swiggy-pub-1" }
+}
+
+resource "aws_subnet" "pub2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = data.aws_availability_zones.azs.names[1]
+  map_public_ip_on_launch = true
+  tags = { Name = "swiggy-pub-2" }
+}
+
+# Private subnets (for ASG instances)
+resource "aws_subnet" "pvt1" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.101.0/24"
+  availability_zone = data.aws_availability_zones.azs.names[0]
+  tags = { Name = "swiggy-pvt-1" }
+}
+
+resource "aws_subnet" "pvt2" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.102.0/24"
+  availability_zone = data.aws_availability_zones.azs.names[1]
+  tags = { Name = "swiggy-pvt-2" }
+}
+
+# NAT for private subnets (lets instances reach yum repos)
+resource "aws_eip" "nat_eip" {
+  domain = "vpc"
+  tags   = { Name = "swiggy-nat-eip" }
+}
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.pub1.id
+  tags          = { Name = "swiggy-nat" }
+  depends_on    = [aws_internet_gateway.igw]
+}
+
+# Public route table
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+  tags = { Name = "swiggy-public-rt" }
+}
+
+resource "aws_route_table_association" "pub1" {
+  route_table_id = aws_route_table.public.id
+  subnet_id      = aws_subnet.pub1.id
+}
+resource "aws_route_table_association" "pub2" {
+  route_table_id = aws_route_table.public.id
+  subnet_id      = aws_subnet.pub2.id
+}
+
+# Private route table
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+  tags = { Name = "swiggy-private-rt" }
+}
+
+resource "aws_route_table_association" "pvt1" {
+  route_table_id = aws_route_table.private.id
+  subnet_id      = aws_subnet.pvt1.id
+}
+resource "aws_route_table_association" "pvt2" {
+  route_table_id = aws_route_table.private.id
+  subnet_id      = aws_subnet.pvt2.id
+}
+
+# Security groups
+# - ALB SG: allow 80 from anywhere
+resource "aws_security_group" "lb_sg" {
+  name        = "swiggy-alb-sg"
+  description = "ALB SG"
+  vpc_id      = aws_vpc.main.id
+
+  ingress { from_port = 80  to_port = 80  protocol = "tcp" cidr_blocks = ["0.0.0.0/0"] }
+  egress  { from_port = 0   to_port = 0   protocol = "-1"  cidr_blocks = ["0.0.0.0/0"] }
+
+  tags = { Name = "swiggy-alb-sg" }
+}
+
+# - App SG: allow 80 only from ALB SG
+resource "aws_security_group" "app_sg" {
+  name        = "swiggy-app-sg"
+  description = "App SG"
+  vpc_id      = aws_vpc.main.id
 
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description     = "HTTP from ALB"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lb_sg.id]
   }
+  # (Optional) SSH for troubleshooting - restrict as needed
+  # ingress { from_port = 22 to_port = 22 protocol = "tcp" cidr_blocks = ["YOUR.IP.ADDR.0/24"] }
 
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  egress { from_port = 0 to_port = 0 protocol = "-1" cidr_blocks = ["0.0.0.0/0"] }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "swiggy-ec2-asg-sg-app"
-  }
+  tags = { Name = "swiggy-app-sg" }
 }
