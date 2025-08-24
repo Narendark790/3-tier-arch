@@ -5,7 +5,7 @@ resource "aws_autoscaling_group" "swiggy-web-asg" {
     id      = aws_launch_template.swiggy-web-template.id
     version = "$Latest"
   }
-  vpc_zone_identifier = [aws_subnet.swiggy-pub-sub-1.id, aws_subnet.swiggy-pub-sub-2.id]
+  vpc_zone_identifier = ["subnet-06c0691a886046966", "subnet-09e9299a477ac08d3"]
   min_size            = 2
   max_size            = 3
   desired_capacity    = 2
@@ -19,7 +19,7 @@ resource "aws_launch_template" "swiggy-web-template" {
   key_name      = "3tierprojectfornarendar"
   network_interfaces {
     associate_public_ip_address = true
-    security_groups             = [aws_security_group.swiggy-ec2-asg-sg.id]
+   vpc_security_group_ids = [aws_security_group.app_sg.id]
   }
   user_data = base64encode(file("apache.sh"))
   lifecycle {
