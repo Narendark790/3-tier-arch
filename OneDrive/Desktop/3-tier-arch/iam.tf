@@ -1,27 +1,25 @@
-resource "aws_iam_user" "users" {
-  for_each = toset(local.users)
+# IAM Users
 
-  name = each.value
+# Create IAM users
+resource "aws_iam_user" "usr" {
+  for_each = toset(local.users)
+  name     = each.value
 }
 
 locals {
-  users = ["user-1", "user-2", "user-3"]
+  users = ["gout-1", "gout-2", "gout-3"]
 }
 
-# Attach S3 ReadOnly Policy
-resource "aws_iam_user_policy_attachment" "s3_readonly" {
-  for_each = toset(local.users)
-
-  user       = aws_iam_user.users[each.value].name
+# S3 Read Only Access
+resource "aws_iam_user_policy_attachment" "s3-read" {
+  for_each   = toset(local.users)
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+  user       = aws_iam_user.usr[each.value].name
 }
 
-# Attach EC2 ReadOnly Policy
-resource "aws_iam_user_policy_attachment" "ec2_readonly" {
-  for_each = toset(local.users)
-
-  user       = aws_iam_user.users[each.value].name
+# EC2 Read Only Access
+resource "aws_iam_user_policy_attachment" "ec2-read" {
+  for_each   = toset(local.users)
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+  user       = aws_iam_user.usr[each.value].name
 }
-
-
