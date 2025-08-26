@@ -1,25 +1,49 @@
-###### Create an EC2 Auto Scaling Group - web ######
-resource "aws_autoscaling_group" "swiggy-web-asg" {
-  name = "swiggy-web-asg"
+# Web Application Auto Scaling Group
+
+# Create an Auto Scaling Group
+resource "aws_autoscaling_group" "web" {
+  name = "swigg-web-asg"
   launch_template {
-    id      = aws_launch_template.swiggy-web-template.id
+    id      = aws_launch_template.temp.id
     version = "$Latest"
   }
-  vpc_zone_identifier = ["subnet-06c0691a886046966", "subnet-09e9299a477ac08d3"]
-  min_size            = 2
-  max_size            = 3
-  desired_capacity    = 2
+
+  min_size         = 2
+  max_size         = 4
+  desired_capacity = 2
+
+  vpc_zone_identifier = [aws_subnet.pub-subnet-1.id, aws_subnet.pub-subnet-2.id]
+
+  tag {
+    key                 = "Name"
+    value               = "web-asg-instance"
+    propagate_at_launch = true
+  }
 }
 
-###### Create a Launch Template for the EC2 instances ######
-resource "aws_launch_template" "swiggy-web-template" {
-  name_prefix   = "swiggy-web-template"
-  image_id      = "ami-0a232144cf20a27a5"
-  instance_type = "t3.micro"
-  key_name      = "3tierprojectfornarendar"
+# Launch Template
+resource "aws_launch_template" "temp" {
+  name_prefix   = "web-launch-template-"
+  image_id      = "ami-0861f4e788f5069dd"
+  instance_type = "t2.micro"
+  key_name      = "goutm"
+
   network_interfaces {
     associate_public_ip_address = true
-   vpc_security_group_ids = [aws_security_group.app_sg.id]
+    security_groups             = [aws_security_group.ec2-web.id]
   }
+
   user_data = base64encode(file("apache.sh"))
+  lifecycle {
+    prevent_destroy = false
+    ignore_changes  = all
   }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = "web-launch-template-instance"
+    }
+  }
+
+}
