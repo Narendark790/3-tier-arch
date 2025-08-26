@@ -1,54 +1,47 @@
-# Latest Amazon Linux 2 AMI (region-agnostic)
-data "aws_ami" "amzn2" {
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+# Application Auto Scaling Group
+
+# Create an Auto Scaling Group
+resource "aws_autoscaling_group" "app" {
+  name = "swigg-app-asg"
+  launch_template {
+    id      = aws_launch_template.app-temp.id
+    version = "$Latest"
   }
+  max_size            = 4
+  min_size            = 2
+  desired_capacity    = 2
+  vpc_zone_identifier = [aws_subnet.priv-subnet-1.id, aws_subnet.priv-subnet-2.id]
 }
+
 # Launch Template
-resource "aws_launch_template" "app_template" {
-  name_prefix               = "swiggy-app-"
-  image_id                  = "0c4a668b99e68bbde"
-  instance_type             = "t3.micro"
-  vpc_security_group_ids    = [aws_security_group.app_sg.id]
+resource "aws_launch_template" "app-temp" {
+  name_prefix   = "app-launch-template-"
+  image_id      = "ami-0861f4e788f5069dd"
+  instance_type = "t2.micro"
+  key_name      = "goutm"
+
+  network_interfaces {
+    associate_public_ip_address = false
+    security_groups             = [aws_security_group.ec2-app.id]
+  }
 
   user_data = base64encode(<<-EOF
-              #!/bin/bash
-              yum -y update
-              yum -y install httpd
-              systemctl enable --now httpd
-              echo "<h1>Hello from Swiggy App (ASG)</h1>" > /var/www/html/index.html
-              EOF
+  #!/bin/bash
+
+  sudo yum install mysql -y
+
+  EOF
   )
+  lifecycle {
+    prevent_destroy = false
+    ignore_changes  = all
+  }
 
   tag_specifications {
     resource_type = "instance"
-    tags = { Name = "swiggy-app" }
-  }
-}
-
-# Auto Scaling Group (in PRIVATE subnets, uses NAT for yum)
-resource "aws_autoscaling_group" "app_asg" {
-  name                      = "swiggy-asg"
-  max_size                  = 3
-  min_size                  = 2
-  desired_capacity          = 2
-  vpc_zone_identifier       = [subnet-03fa54a742101e609, subnet-092bbebd2a91c7046]
-
-  launch_template {
-    id      = aws_launch_template.app_template.id
-    version = "$Latest"
+    tags = {
+      Name = "app-launch-template-instance"
+    }
   }
 
-  # Attach target group directly (cleaner than a separate attachment)
-  target_group_arns = [aws_lb_target_group.app_tg.arn]
-
-  health_check_type         = "ELB"
-  health_check_grace_period = 60
-
-  tag {
-    key                 = "Name"
-    value               = "swiggy-app"
-    propagate_at_launch = true
-  }
 }
