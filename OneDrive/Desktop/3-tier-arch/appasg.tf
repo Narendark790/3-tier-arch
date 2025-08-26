@@ -1,67 +1,54 @@
-# Security Group for App Servers
-resource "aws_security_group" "app_sg" {
-  name        = "swiggy-app-sg"
-  description = "Allow App traffic"
-  vpc_id      = aws_vpc.main.id   # replace with your actual VPC ID or variable
-
-  ingress {
-    description = "Allow SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+# Latest Amazon Linux 2 AMI (region-agnostic)
+data "aws_ami" "amzn2" {
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
+}
+# Launch Template
+resource "aws_launch_template" "app_template" {
+  name_prefix               = "swiggy-app-"
+  image_id                  = "0c4a668b99e68bbde"
+  instance_type             = "t3.micro"
+  vpc_security_group_ids    = [aws_security_group.app_sg.id]
 
-  ingress {
-    description = "Allow HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  user_data = base64encode(<<-EOF
+              #!/bin/bash
+              yum -y update
+              yum -y install httpd
+              systemctl enable --now httpd
+              echo "<h1>Hello from Swiggy App (ASG)</h1>" > /var/www/html/index.html
+              EOF
+  )
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "swiggy-app-sg"
+  tag_specifications {
+    resource_type = "instance"
+    tags = { Name = "swiggy-app" }
   }
 }
 
-# Security Group for ALB
-resource "aws_security_group" "alb_sg" {
-  name        = "swiggy-alb-sg"
-  description = "Allow inbound HTTP/HTTPS for ALB"
-  vpc_id      = aws_vpc.main.id   # replace with your actual VPC ID or variable
+# Auto Scaling Group (in PRIVATE subnets, uses NAT for yum)
+resource "aws_autoscaling_group" "app_asg" {
+  name                      = "swiggy-asg"
+  max_size                  = 3
+  min_size                  = 2
+  desired_capacity          = 2
+  vpc_zone_identifier       = [subnet-03fa54a742101e609, subnet-092bbebd2a91c7046]
 
-  ingress {
-    description = "Allow HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  launch_template {
+    id      = aws_launch_template.app_template.id
+    version = "$Latest"
   }
 
-  ingress {
-    description = "Allow HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # Attach target group directly (cleaner than a separate attachment)
+  target_group_arns = [aws_lb_target_group.app_tg.arn]
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  health_check_type         = "ELB"
+  health_check_grace_period = 60
 
-  tags = {
-    Name = "swiggy-alb-sg"
+  tag {
+    key                 = "Name"
+    value               = "swiggy-app"
+    propagate_at_launch = true
   }
 }
