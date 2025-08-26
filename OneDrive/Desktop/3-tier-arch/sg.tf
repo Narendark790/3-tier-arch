@@ -153,7 +153,7 @@ resource "aws_security_group" "db_sg" {
 
   tags = { Name = "swiggy-alb-sg" }
 }
-}
+
 /*
 # - App SG: allow 80 only from ALB SG
   name        = "swiggy-app-sg"
