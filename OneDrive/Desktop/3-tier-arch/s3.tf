@@ -1,7 +1,14 @@
-resource "aws_s3_bucket" "example" {
-  bucket = "narendar-terraform-test-bucket"
+# S3 Bucket
+
+# Create an S3 bucket
+resource "aws_s3_bucket" "bucket" {
+  bucket = "swiggy-s3-bucket-gout-7989"
 }
 
-output "bucket_name" {
-  value = aws_s3_bucket.example.bucket
+# Enable versioning
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
