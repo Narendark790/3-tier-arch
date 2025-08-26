@@ -107,7 +107,7 @@ resource "aws_security_group" "app_sg" {
   vpc_id      = "vpc-0ab9b74d8c4bc3af0"
 }
 # App SG (allow 80 from ALB SG)
-resource "aws_security_group" "app_sg" {
+resource "aws_security_group" "app_sg-01" {
   name   = "swiggy-app-sg"
   vpc_id = "vpc-0ab9b74d8c4bc3af0"
 
@@ -138,15 +138,6 @@ resource "aws_security_group" "db_sg" {
     security_groups = [aws_security_group.app_sg.id]
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-
  ingress {
   from_port   = 80
   to_port     = 80
@@ -162,7 +153,8 @@ resource "aws_security_group" "db_sg" {
 
   tags = { Name = "swiggy-alb-sg" }
 }
-
+}
+/*
 # - App SG: allow 80 only from ALB SG
   name        = "swiggy-app-sg"
   description = "App SG"
@@ -186,4 +178,4 @@ resource "aws_security_group" "db_sg" {
 }
 
   tags = { Name = "swiggy-app-sg" }
-}
+} */
