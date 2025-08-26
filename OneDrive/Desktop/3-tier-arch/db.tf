@@ -1,29 +1,29 @@
-#### RDS ####
-resource "aws_db_subnet_group" "swiggy-db-sub-grp" {
-  name       = "swiggy-db-sub-grp"
-  subnet_ids = ["${aws_subnet.swiggy-pvt-sub-3.id}","${aws_subnet.swiggy-pvt-sub-4.id}"]
+# Database Subnet Group
+
+# Create a database subnet group
+resource "aws_db_subnet_group" "db" {
+  name       = "swigg-db-subnet-group"
+  subnet_ids = [aws_subnet.priv-subnet-3.id, aws_subnet.priv-subnet-4.id]
 }
 
-resource "aws_db_instance" "swiggy-db" {
-  allocated_storage           = 100
-  storage_type                = "gp3"
-  engine                      = "mysql"
-  engine_version              = "8.0.41"
-  instance_class              = "db.m5.large"
-  identifier                  = "swiggy-db"
-  username                    = "admin"
-  password                    = "Devopsbyraham007*"
-  parameter_group_name        = "default.mysql8.0"
-  db_subnet_group_name        = aws_db_subnet_group.swiggy-db-sub-grp.name
-  vpc_security_group_ids      = ["sg-0cc393add35f29e3b"]
-  multi_az                    = true
-  skip_final_snapshot         = true
-  publicly_accessible          = false
+# MySQL RDS Instance
+resource "aws_db_instance" "db-instance" {
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  storage_type           = "gp3"
+  engine                 = "mysql"
+  identifier             = "swiggy-db"
+  username               = "admin"
+  password               = "Goutham1404"
+  parameter_group_name   = "default.mysql8.0"
+  db_subnet_group_name   = aws_db_subnet_group.db.name
+  vpc_security_group_ids = [aws_security_group.ec2-db.id]
+  multi_az               = true
+  skip_final_snapshot    = true
+  publicly_accessible    = false
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
     ignore_changes  = all
   }
 }
-
-
