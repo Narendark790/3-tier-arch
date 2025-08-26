@@ -22,8 +22,4 @@ resource "aws_launch_template" "swiggy-web-template" {
    vpc_security_group_ids = [aws_security_group.app_sg.id]
   }
   user_data = base64encode(file("apache.sh"))
-  lifecycle {
-    prevent_destroy = false
-    ignore_changes  = all
   }
-}
