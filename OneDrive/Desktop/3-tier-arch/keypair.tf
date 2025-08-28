@@ -8,11 +8,11 @@ resource "tls_private_key" "rsa" {
 
 # Create a new local file to store the private key
 resource "local_file" "key" {
-  filename = "mumkey.pem"
+  filename = "nare.pem"
   content  = tls_private_key.rsa.private_key_pem
 }
 
 resource "aws_key_pair" "kp" {
   public_key = tls_private_key.rsa.public_key_openssh
-  key_name   = "mumkey"
+  key_name   = "nare"
 }
