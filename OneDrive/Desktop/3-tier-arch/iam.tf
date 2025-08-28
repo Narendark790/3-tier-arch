@@ -7,7 +7,7 @@ resource "aws_iam_user" "usr" {
 }
 
 locals {
-  users = ["gout-1", "gout-2", "gout-3"]
+  users = ["user-1", "user-2", "user-3"]
 }
 
 # S3 Read Only Access
