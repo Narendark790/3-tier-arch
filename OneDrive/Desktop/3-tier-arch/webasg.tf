@@ -26,7 +26,7 @@ resource "aws_launch_template" "temp" {
   name_prefix   = "web-launch-template-"
   image_id      = "ami-0861f4e788f5069dd"
   instance_type = "t3.micro"
-  key_name      = "nare"
+  key_name      = "mumkey"
 network_interfaces {
     associate_public_ip_address = true
     security_groups             = [aws_security_group.ec2-web.id]
