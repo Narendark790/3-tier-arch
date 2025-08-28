@@ -7,7 +7,7 @@ resource "aws_db_subnet_group" "db" {
 }
 
 # MySQL RDS Instance
-resource "aws_db_instance" "db-instance" {
+resource "aws_db_instance" "data-instance" {
   instance_class         = "db.t3.micro"
   allocated_storage      = 20
   storage_type           = "gp3"
