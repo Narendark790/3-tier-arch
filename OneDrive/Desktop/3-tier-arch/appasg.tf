@@ -16,7 +16,7 @@ resource "aws_autoscaling_group" "app" {
   ]
 
   tag {
-    key                 = "mumkey"
+    key                 = "Name"
     value               = "swigg-app-asg"
     propagate_at_launch = true
   }
@@ -29,6 +29,7 @@ resource "aws_launch_template" "app-temp" {
   instance_type = "t3.micro"
 
   key_name = "nare"
+
   network_interfaces {
     associate_public_ip_address = false
     security_groups             = [aws_security_group.ec2-app.id]
@@ -37,15 +38,15 @@ resource "aws_launch_template" "app-temp" {
   user_data = base64encode(<<-EOF
     #!/bin/bash
     yum update -y
-    yum install mysql -y
-    systemctl enable mysql
-    systemctl start mysql
+    yum install -y mysql
+    systemctl enable mysqld || true
+    systemctl start mysqld || true
   EOF
   )
 
   lifecycle {
     prevent_destroy = false
-    ignore_changes  = [user_data]
+    ignore_changes  = all
   }
 
   tag_specifications {
