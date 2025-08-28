@@ -14,5 +14,5 @@ resource "local_file" "key" {
 
 resource "aws_key_pair" "kp" {
   public_key = tls_private_key.rsa.public_key_openssh
-  key_name   = "nare"
+  key_name   = "mumkey"
 }
