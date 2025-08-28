@@ -18,7 +18,7 @@ resource "aws_launch_template" "app-temp" {
   name_prefix   = "app-launch-template-"
   image_id      = "ami-0861f4e788f5069dd"
   instance_type = "t3.micro"
-  key_name      = "nare"
+  key_name      = "mumkey"
 
   network_interfaces {
     associate_public_ip_address = false
