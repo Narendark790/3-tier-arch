@@ -14,7 +14,7 @@ resource "aws_db_instance" "db-instance" {
   engine                 = "mysql"
   identifier             = "swiggy-db"
   username               = "admin"
-  password               = "Goutham1404"
+  password               = "790dhoni"
   parameter_group_name   = "default.mysql8.0"
   db_subnet_group_name   = aws_db_subnet_group.db.name
   vpc_security_group_ids = [aws_security_group.ec2-db.id]
