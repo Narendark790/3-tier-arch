@@ -16,7 +16,7 @@ resource "aws_autoscaling_group" "app" {
   ]
 
   tag {
-    key                 = "Name"
+    key                 = "mumkey"
     value               = "swigg-app-asg"
     propagate_at_launch = true
   }
