@@ -12,7 +12,7 @@ resource "aws_db_instance" "db-instance"{
   allocated_storage      = 20
   storage_type           = "gp3"
   engine                 = "mysql"
-  identifier             = "swiggy-db"
+  identifier             = "swiggy-db-new"
   username               = "admin"
   password               = "790dhoni"
   parameter_group_name   = "default.mysql8.0"
