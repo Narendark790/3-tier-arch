@@ -47,6 +47,7 @@ resource "aws_launch_template" "app-temp" {
   lifecycle {
     prevent_destroy = false
     ignore_changes  = all
+    create_before_destroy = true
   }
 
   tag_specifications {
