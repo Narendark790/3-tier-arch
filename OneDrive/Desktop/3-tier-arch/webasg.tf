@@ -25,8 +25,8 @@ resource "aws_autoscaling_group" "web" {
 resource "aws_launch_template" "temp" {
   name_prefix   = "web-launch-template-"
   image_id      = "ami-0861f4e788f5069dd"
-  instance_type = "t2.micro"
-  key_name      = "goutm"
+  instance_type = "t3.micro"
+  key_name      = "nare"
 
   network_interfaces {
     associate_public_ip_address = true
